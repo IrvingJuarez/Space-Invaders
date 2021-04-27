@@ -23,6 +23,8 @@ main{
     top: 0;
     width: 50px;
     height: 120px;
+
+    z-index: 2;
 }
 .media a{
     width: 30px;
@@ -51,4 +53,24 @@ main{
     background-size: cover;
     background-repeat: no-repeat;
     background-image: url('./assets/icons/spaceship.svg');
+}
+.laserBeam{
+    position: absolute;
+    width: 8px;
+    height: 40px;
+    border: 1px solid #7bdafa;
+
+    border-radius: 15px;
+    background-color: #ffffff;
+    box-shadow: 3px 3px 9px #1668cc, -3px -3px 9px #1668cc;
+}
+.ovni{
+    position: absolute;
+    width: 50px;
+    height: 40px;
+
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-image: url('./assets/icons/ovni.svg');
 }
