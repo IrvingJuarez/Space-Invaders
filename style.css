@@ -24,7 +24,7 @@ main{
     width: 50px;
     height: 120px;
 
-    z-index: 2;
+    z-index: 3;
 }
 .media a{
     width: 30px;
@@ -73,4 +73,6 @@ main{
     background-size: cover;
     background-repeat: no-repeat;
     background-image: url('./assets/icons/ovni.svg');
+
+    z-index: 2;
 }

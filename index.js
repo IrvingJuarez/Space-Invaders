@@ -5,13 +5,13 @@ const OVNI_WIDTH = 50, OVNI_HEIGHT = 40
 var arrayTouch = [], currentXAxis = STARSHIP.getBoundingClientRect().x, expectedXAxis
 var currentYAxis = STARSHIP.getBoundingClientRect().y
 let positionX
-var ovniIndex = 0, ovnis = []
+var ovnis = [], ovniIndex = 0
 
 class Ovni{
     constructor(){
         this.x = Math.floor(Math.random() * (window.innerWidth - OVNI_WIDTH))
         this.finalX = this.x + OVNI_WIDTH
-        this.y = 0
+        this.y = OVNI_HEIGHT
         this.ovni = document.createElement("div")
         this.index = ovniIndex
         ovniIndex++
@@ -25,20 +25,39 @@ class Ovni{
             x: this.x,
             finalX: this.finalX,
             y: this.y,
-            index: this.index,
-            divObject: this.ovni
+            divObject: this.ovni,
+            index: this.index
         }
         ovnis.push(ovniObject)
-
-        console.log(ovnis)
     }
 
     displayOvni(){
         this.ovni.classList.add("ovni")
         this.ovni.style.left = this.x+`px`
-        this.ovni.style.top = this.y+`px`
+        this.ovni.style.top = (this.y - OVNI_HEIGHT)+`px`
 
         BOARD_GAME.appendChild(this.ovni)
+
+        this.moveDownwards()
+    }
+
+    moveDownwards(){
+        if(this.y >= window.innerHeight){
+            console.log(`Floor reached`)
+        }else{
+            this.y+=2
+            ovnis = ovnis.filter(ovni => {
+                if(ovni.index === this.index){
+                    ovni.y = this.y
+                }
+            })
+
+            setTimeout(() => {
+                this.ovni.style.top = (this.y - OVNI_HEIGHT)+`px`
+
+                this.moveDownwards()
+            }, 500)
+        }
     }
 }
 
@@ -58,70 +77,79 @@ class Laser {
 
         BOARD_GAME.appendChild(this.laser)
 
-        this.moveUpwards()
+        this.isOvniAbove()
+    }
+
+    isOvniAbove(){
+        if(ovnis.length === 0){
+            this.moveUpwards()
+        }else{
+            let indicator = false, target, i = 0
+
+            for(let i = 0; i < ovnis.length; i++){
+                if(this.x >= ovnis[i].x && this.x <= ovnis[i].finalX){
+                    indicator = true
+                    target = ovnis[i]
+                }
+            }
+
+            console.log(target.y)
+
+            if(indicator){
+                this.destroyOvni(target)
+                // console.log(`Target`)
+            }else{
+                this.moveUpwards()
+                // console.log(`No target`)
+            }
+        }
     }
 
     moveUpwards(){
-        if(ovnis.length === 0){
-            if(this.y <= 0){
-                BOARD_GAME.removeChild(this.laser)
-            }else{
-                setTimeout(() => {
-                    this.y-=2
-                    this.laser.style.top = this.y+`px`
-        
-                    this.moveUpwards()
-                }, 0)
-            }
+        if(this.y <= 0){
+            BOARD_GAME.removeChild(this.laser)
         }else{
-            for(let i = 0; i < ovnis.length; i++){
-                if(this.x >= ovnis[i].x && this.x <= ovnis[i].finalX){
-                    if(this.y <= ovnis[i].y + OVNI_HEIGHT){
-                        BOARD_GAME.removeChild(this.laser)
-                        BOARD_GAME.removeChild(ovnis[i].divObject)
-                        ovnis.splice(ovnis[i].index, 1)
-
-                        console.log(ovnis)
-                    }else{
-                        setTimeout(() => {
-                            this.y-=2
-                            this.laser.style.top = this.y+`px`
-                
-                            this.moveUpwards()
-                        }, 0)
-                    }
-                }else{
-                    console.log(`No target`)
-                }
-            }
+            this.up()
         }
-        
+    }
 
+    destroyOvni(target){
+        if(this.y <= target.y){
+            BOARD_GAME.removeChild(this.laser)
+            BOARD_GAME.removeChild(target.divObject)
+            ovnis = ovnis.filter(ovni => {
+                if(ovni.index == target.index){
+
+                }else{
+                    return ovni
+                }
+            })
+        }else{
+            this.up()
+        }
+    }
+
+    up(){
+        setTimeout(() => {
+            this.y -= 2
+            this.laser.style.top = this.y+`px`
+
+            this.isOvniAbove()
+        }, 0)
     }
 }
 
-direction = () => {
-    let index = arrayTouch.length - 1
+createOvni = () => {
+    let time = Math.ceil(Math.random() * 9)
 
-    if(arrayTouch[index] > arrayTouch[index - 1]){
-        //Right
-        if(STARSHIP.style.left == borderRight+`px`){
-
-        }else{
-            expectedXAxis = currentXAxis + 1
-            STARSHIP.style.left = expectedXAxis+`px`
-        }
+    if(time % 3 === 0){
+        setTimeout(() => {
+            let ovni = new Ovni()
+            createOvni()
+        }, time * 1000)
     }else{
-        //Left
-        if(STARSHIP.style.left == `0px`){
-            
-        }else{
-            expectedXAxis = currentXAxis - 1
-            STARSHIP.style.left = expectedXAxis+`px`
-        }
+        createOvni()
     }
-
-    currentXAxis = expectedXAxis
 }
 
 isTap = () => {
@@ -131,12 +159,34 @@ isTap = () => {
     }
 }
 
+direction = () => {
+    let index = arrayTouch.length - 1
+
+    if(arrayTouch[index] > arrayTouch[index - 1]){
+        //Right
+        if(Number(STARSHIP.style.left.replace(`px`, ``)) >= borderRight){
+
+        }else{
+            expectedXAxis = currentXAxis + 2
+            STARSHIP.style.left = expectedXAxis+`px`
+        }
+    }else{
+        //Left
+        if(Number(STARSHIP.style.left.replace(`px`, ``)) <= 0){
+            
+        }else{
+            expectedXAxis = currentXAxis - 2
+            STARSHIP.style.left = expectedXAxis+`px`
+        }
+    }
+
+    currentXAxis = expectedXAxis
+}
+
 window.onload = () => {
     STARSHIP.style.left = currentXAxis+`px`
 
-    setTimeout(() => {
-        let ovni = new Ovni()
-    }, 2000)
+    let ovni = new Ovni()
 
     BOARD_GAME.addEventListener("touchstart", evt => {
         arrayTouch.push(evt.touches[0].screenX)
