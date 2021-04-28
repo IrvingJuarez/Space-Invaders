@@ -64,6 +64,16 @@ main{
     background-color: #ffffff;
     box-shadow: 3px 3px 9px #1668cc, -3px -3px 9px #1668cc;
 }
+.enemyLaserBeam{
+    position: absolute;
+    width: 8px;
+    height: 40px;
+    border: 1px solid #fa7bda;
+
+    border-radius: 15px;
+    background-color: #ffffff;
+    box-shadow: 3px 3px 9px #cc1668, -3px -3px 9px #cc1668;
+}
 .ovni{
     position: absolute;
     width: 50px;

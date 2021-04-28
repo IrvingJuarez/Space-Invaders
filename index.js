@@ -1,11 +1,42 @@
 const BOARD_GAME = document.getElementById("boardGame"), STARSHIP = document.getElementById("starShip")
-const STARSHIP_WIDTH = 50, RAY_WIDTH = 8, RAY_HEIGHT = 40
+const STARSHIP_WIDTH = 50, LASER_WIDTH = 8, LASER_HEIGHT = 40
 const borderRight = window.innerWidth - STARSHIP_WIDTH
 const OVNI_WIDTH = 50, OVNI_HEIGHT = 40
 var arrayTouch = [], currentXAxis = STARSHIP.getBoundingClientRect().x, expectedXAxis
 var currentYAxis = STARSHIP.getBoundingClientRect().y
 let positionX
 var ovnis = [], ovniIndex = 0
+
+class EnemyLaser{
+    constructor(object){
+        this.y = object.y
+        this.x = object.x
+        this.createEnemyLaser()
+    }
+
+    createEnemyLaser(){
+        this.laser = document.createElement("div")
+        this.laser.classList.add("enemyLaserBeam")
+        this.laser.style.top = this.y+`px`
+        this.laser.style.left = ((this.x + (OVNI_WIDTH/2)) - LASER_WIDTH/2)+`px`
+        BOARD_GAME.appendChild(this.laser)
+
+        this.down()
+    }
+
+    down(){
+        if(this.y + LASER_HEIGHT >= window.innerHeight){
+            BOARD_GAME.removeChild(this.laser)
+        }else{
+            setTimeout(() => {
+                this.y+=2
+                this.laser.style.top = this.y+`px`
+
+                this.down()
+            }, 15)
+        }
+    }
+}
 
 class Ovni{
     constructor(){
@@ -15,20 +46,9 @@ class Ovni{
         this.ovni = document.createElement("div")
         this.index = ovniIndex
         ovniIndex++
+        ovnis.push(this)
 
-        this.addOvni()
         this.displayOvni()
-    }
-
-    addOvni(){
-        let ovniObject = {
-            x: this.x,
-            finalX: this.finalX,
-            y: this.y,
-            divObject: this.ovni,
-            index: this.index
-        }
-        ovnis.push(ovniObject)
     }
 
     displayOvni(){
@@ -38,7 +58,12 @@ class Ovni{
 
         BOARD_GAME.appendChild(this.ovni)
 
-        this.moveDownwards()
+        this.shot()
+        // this.moveDownwards()
+    }
+
+    shot(){
+        let enemyLaser = new EnemyLaser(this)
     }
 
     moveDownwards(){
@@ -46,25 +71,20 @@ class Ovni{
             console.log(`Floor reached`)
         }else{
             this.y+=2
-            ovnis = ovnis.filter(ovni => {
-                if(ovni.index === this.index){
-                    ovni.y = this.y
-                }
-            })
 
             setTimeout(() => {
                 this.ovni.style.top = (this.y - OVNI_HEIGHT)+`px`
 
                 this.moveDownwards()
-            }, 500)
+            }, 100)
         }
     }
 }
 
 class Laser {
     constructor(){
-        this.x = ((Number(STARSHIP.style.left.replace(`px`, ``)) + (STARSHIP_WIDTH / 2)) - (RAY_WIDTH / 2))
-        this.y = currentYAxis - RAY_HEIGHT
+        this.x = ((Number(STARSHIP.style.left.replace(`px`, ``)) + (STARSHIP_WIDTH / 2)) - (LASER_WIDTH / 2))
+        this.y = currentYAxis - LASER_HEIGHT
         this.laser = document.createElement("div")
 
         this.printLaser()
@@ -89,11 +109,9 @@ class Laser {
             for(let i = 0; i < ovnis.length; i++){
                 if(this.x >= ovnis[i].x && this.x <= ovnis[i].finalX){
                     indicator = true
-                    target = ovnis[i]
+                    target = Number(i)
                 }
             }
-
-            console.log(target.y)
 
             if(indicator){
                 this.destroyOvni(target)
@@ -114,11 +132,11 @@ class Laser {
     }
 
     destroyOvni(target){
-        if(this.y <= target.y){
+        if(this.y <= ovnis[target].y){
             BOARD_GAME.removeChild(this.laser)
-            BOARD_GAME.removeChild(target.divObject)
+            BOARD_GAME.removeChild(ovnis[target].ovni)
             ovnis = ovnis.filter(ovni => {
-                if(ovni.index == target.index){
+                if(ovni.index == ovnis[target].index){
 
                 }else{
                     return ovni
