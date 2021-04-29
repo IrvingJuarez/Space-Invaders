@@ -8,12 +8,13 @@ const LASER_WIDTH = 8, LASER_HEIGHT = 40
 const OVNI_WIDTH = 50, OVNI_HEIGHT = 40
 
 const LIFES_CONTAINER = document.getElementById("lifes-container"), POINTS = document.getElementById("points")
-const NEXT_LEVEL = document.getElementById("nextLevel")
+const NEXT_LEVEL = document.getElementById("nextLevel"), SECONDARY_TITLE = document.getElementById("secondary-title")
 
 let positionX
 var arrayTouch = [], ovnis = []
 var currentXAxis = STARSHIP.getBoundingClientRect().x, currentYAxis = STARSHIP.getBoundingClientRect().y
 var ovniIndex = 0, expectedXAxis, speed = 150, enemyLaserSpeed = 15
+var keyFlag
 
 class EnemyLaser{
     constructor(object, enemyLaserSpeed){
@@ -187,7 +188,7 @@ class Laser {
             }
         })
 
-        newGame.points+=5
+        newGame.points+=2.5
         newGame.displayPoints()
     }
 
@@ -228,6 +229,28 @@ function direction(){
     currentXAxis = expectedXAxis
 }
 
+function keyConstrols(evt){
+    switch(evt.keyCode){
+        case 39:
+            while(keyFlag){
+                console.log(`True`)
+                // expectedXAxis = currentXAxis + 2
+                // if(Number(STARSHIP.style.left.replace(`px`, ``)) >= borderRight){
+                //     Do nothing
+                // }else{
+                //     STARSHIP.style.left = expectedXAxis+`px`
+                // }
+            }
+        break;
+        case 37:
+            console.log(`Left`)
+        break;
+        case 32:
+            console.log(`Spacebar`)
+        break;
+    }
+}
+
 class Game{
     constructor(){
         this.points = 0
@@ -239,7 +262,7 @@ class Game{
         this.setStarship()
         this.controls()
         this.displayStatus()
-        this.createOvnis()
+        // this.createOvnis()
     }
 
     hideTitle(){
@@ -281,7 +304,6 @@ class Game{
             POINTS.innerHTML = this.points
         }else{
             if(this.points % 100 === 0){
-                this.stop = true
                 POINTS.innerHTML = this.points
                 this.nextLevel()
             }else{
@@ -291,26 +313,27 @@ class Game{
     }
 
     nextLevel(){
+        SECONDARY_TITLE.innerHTML = "Next level..."
         NEXT_LEVEL.style.opacity = 1
+        this.level++
+        this.changesOfLevel()
 
-        ovnis.forEach(item => {
-            BOARD_GAME.removeChild(item.ovni)
-            item.alive = false
-        })
+        this.cleanScreen()
 
-        ovnis = []
         setTimeout(() => {
-            this.stop = false
             NEXT_LEVEL.style.opacity = 0
-
-            if(enemyLaserSpeed != 5){
-                enemyLaserSpeed -= 5
-            }
-
-            if(speed != 50){
-                speed -= 50
-            }
+            SECONDARY_TITLE.innerHTML = ""
         }, 2000)
+    }
+
+    changesOfLevel(){
+        if(this.level % 2 === 0){
+            this.createOvnis()
+        }else{
+            if(speed != 50){
+                speed-=50
+            }
+        }
     }
 
     displayStatus(){
@@ -321,10 +344,10 @@ class Game{
 
     createOvnis(){
         if(this.stop){
-            //Nothing happen
+
         }else{
-            let time = Math.ceil(Math.random() * 9)
-            if(time % 3 === 0){
+            let time = Math.ceil(Math.random() * 10)
+            if(time % 2 === 0){
                 setTimeout(() => {
                     let ovni = new Ovni(speed)
                     this.createOvnis()
@@ -336,12 +359,8 @@ class Game{
     }
 
     killStarship(){
-        if(this.lifes === -1){
-            ovnis.forEach(item => {
-                BOARD_GAME.removeChild(item.ovni)
-                item.alive = false
-            })
-            ovnis = []
+        if(this.lifes <= -1){
+            this.cleanScreen()
             this.loser()
         }else{
             LIFES_CONTAINER.removeChild(LIFES_CONTAINER.childNodes[this.lifes])
@@ -349,8 +368,22 @@ class Game{
     }
 
     loser(){
-        console.log(`You lose`)
+        STARSHIP.style.opacity = 0
         this.stop = true
+        SECONDARY_TITLE.innerHTML = "Game over"
+        NEXT_LEVEL.style.opacity = 1
+
+        setTimeout(() => {
+            location.reload()
+        }, 3000)
+    }
+
+    cleanScreen(){
+        ovnis.forEach(item => {
+            BOARD_GAME.removeChild(item.ovni)
+            item.alive = false
+        })
+        ovnis = []
     }
 }
 
