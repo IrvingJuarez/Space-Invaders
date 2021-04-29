@@ -1,7 +1,14 @@
+const TITLE_SECTION = document.getElementById("main-section"), BUTTON_START = document.getElementById("start-button")
+const GAME_STATUS = document.getElementById("game-status")
+let newGame
+
 const STARSHIP = document.getElementById("starShip"), STARSHIP_WIDTH = 50, STARSHIP_HEIGHT = 50
 const BOARD_GAME = document.getElementById("boardGame"), borderRight = window.innerWidth - STARSHIP_WIDTH
 const LASER_WIDTH = 8, LASER_HEIGHT = 40
 const OVNI_WIDTH = 50, OVNI_HEIGHT = 40
+
+const LIFES_CONTAINER = document.getElementById("lifes-container"), POINTS = document.getElementById("points")
+const NEXT_LEVEL = document.getElementById("nextLevel")
 
 let positionX
 var arrayTouch = [], ovnis = []
@@ -49,13 +56,14 @@ class EnemyLaser{
                 this.y+=2
                 this.laser.style.top = this.y+`px`
                 this.downwards()
-            }, 0)
+            }, 15)
         }
     }
 }
 
 class Ovni{
     constructor(){
+        this.speed = 150
         this.x = Math.floor(Math.random() * (window.innerWidth - OVNI_WIDTH))
         this.finalX = this.x + OVNI_WIDTH
         this.y = OVNI_HEIGHT
@@ -73,13 +81,13 @@ class Ovni{
         this.ovni.style.top = (this.y - OVNI_HEIGHT)+`px`
         BOARD_GAME.appendChild(this.ovni)
         this.moveDownwards()
-        let shot = new EnemyLaser(this)
     }
 
     moveDownwards(){
         if(this.y >= window.innerHeight){
             if(this.alive === true){
                 console.log(`Floor reached`)
+                BOARD_GAME.removeChild(this.ovni)
             }
         }else{
             this.y+=2
@@ -87,8 +95,8 @@ class Ovni{
                 this.ovni.style.top = (this.y - OVNI_HEIGHT)+`px`
 
                 this.moveDownwards()
-                // this.shots()
-            }, 100)
+                this.shots()
+            }, this.speed)
 
         }
     }
@@ -133,23 +141,16 @@ class Laser {
             while(!flagg){
                 if(this.x >= ovnis[i].x && this.x <= ovnis[i].finalX){
                     flagg = true
-                    // indicator = true
-                    // target = Number(i)
                     this.destroyOvni(i)
                 }else{
-                    i++
                     if(i === j){
                         flagg = true
                         this.moveUpwards()
+                    }else{
+                        i++
                     }
                 }
             }
-
-            // if(indicator){
-            //     this.destroyOvni(target)
-            // }else{
-            //     this.moveUpwards()
-            // }
         }
     }
 
@@ -163,20 +164,27 @@ class Laser {
 
     destroyOvni(target){
         if(this.y <= ovnis[target].y){
-            BOARD_GAME.removeChild(this.laser)
-            BOARD_GAME.removeChild(ovnis[target].ovni)
-            ovnis[target].alive = false
-
-            ovnis = ovnis.filter(ovni => {
-                if(ovni.index == ovnis[target].index){
-                    //Nothing happen
-                }else{
-                    return ovni
-                }
-            })
+            this.ovniKilled(target)    
         }else{
             this.up()
         }
+    }
+
+    ovniKilled(target){
+        BOARD_GAME.removeChild(this.laser)
+        BOARD_GAME.removeChild(ovnis[target].ovni)
+        ovnis[target].alive = false
+
+        ovnis = ovnis.filter(ovni => {
+            if(ovni.index == ovnis[target].index){
+                //Nothing happen
+            }else{
+                return ovni
+            }
+        })
+
+        newGame.points+=2
+        newGame.displayPoints()
     }
 
     up(){
@@ -185,18 +193,6 @@ class Laser {
             this.laser.style.top = this.y+`px`
             this.isOvniAbove()
         }, 0)
-    }
-}
-
-function createOvnis(){
-    let time = Math.ceil(Math.random() * 9)
-    if(time % 3 === 0){
-        setTimeout(() => {
-            let ovni = new Ovni()
-            createOvnis()
-        }, time * 1000)
-    }else{
-        createOvnis()
     }
 }
 
@@ -228,20 +224,102 @@ function direction(){
     currentXAxis = expectedXAxis
 }
 
-window.onload = () => {
-    STARSHIP.style.left = currentXAxis+`px`
-    STARSHIP.style.top = currentYAxis+`px`
-    // createOvnis()
+class Game{
+    constructor(){
+        this.points = 90
+        this.level = 1
+        this.lifes = 2
+        this.stop = false
 
-    BOARD_GAME.addEventListener("touchstart", evt => {
-        arrayTouch.push(evt.touches[0].screenX)
-    })
-    BOARD_GAME.addEventListener("touchmove", evt => {
-        arrayTouch.push(evt.changedTouches[0].screenX)
-        direction()
-    })
-    BOARD_GAME.addEventListener("touchend", () => {
-        isTap()
-        arrayTouch = []
-    })
+        this.hideTitle()
+        this.setStarship()
+        this.controls()
+        this.displayStatus()
+        this.createOvnis()
+    }
+
+    hideTitle(){
+        TITLE_SECTION.style.display = "none"
+    }
+
+    setStarship(){
+        STARSHIP.style.opacity = 1
+        STARSHIP.style.left = currentXAxis+`px`
+        STARSHIP.style.top = currentYAxis+`px`
+    }
+
+    controls(){
+        BOARD_GAME.addEventListener("touchstart", evt => {
+            arrayTouch.push(evt.touches[0].screenX)
+        })
+        BOARD_GAME.addEventListener("touchend", () => {
+            isTap()
+            arrayTouch = []
+        })
+        BOARD_GAME.addEventListener("touchmove", evt => {
+            arrayTouch.push(evt.changedTouches[0].screenX)
+            direction()
+        })
+    }
+
+    displayLifes(){
+        for(let i = 0; i < this.lifes; i++){
+            let life = document.createElement("img")
+            life.src = "./assets/icons/spaceship.svg"
+            life.alt = "Spaceship"
+
+            LIFES_CONTAINER.appendChild(life)
+        }
+    }
+
+    displayPoints(){
+        if(this.points === 0){
+            POINTS.innerHTML = this.points
+        }else{
+            if(this.points % 100 === 0){
+                this.stop = true
+                POINTS.innerHTML = this.points
+                this.nextLevel()
+            }else{
+                POINTS.innerHTML = this.points
+            }
+        }
+    }
+
+    displayStatus(){
+        GAME_STATUS.style.opacity = 1
+        this.displayLifes()
+        this.displayPoints()
+    }
+
+    createOvnis(){
+        if(this.stop){
+            //Nothing happen
+        }else{
+            let time = Math.ceil(Math.random() * 9)
+            if(time % 3 === 0){
+                setTimeout(() => {
+                    let ovni = new Ovni()
+                    this.createOvnis()
+                }, time * 1000)
+            }else{
+                this.createOvnis()
+            }
+        }
+    }
+
+    nextLevel(){
+        NEXT_LEVEL.style.opacity = 1
+        ovnis.forEach(item => {
+            BOARD_GAME.removeChild(item.ovni)
+            item.alive = false
+        })
+        setTimeout(() => {
+            NEXT_LEVEL.style.opacity = 0
+        }, 5000)
+    }
+}
+
+function startGame(){
+    newGame = new Game()
 }
