@@ -13,12 +13,13 @@ const NEXT_LEVEL = document.getElementById("nextLevel")
 let positionX
 var arrayTouch = [], ovnis = []
 var currentXAxis = STARSHIP.getBoundingClientRect().x, currentYAxis = STARSHIP.getBoundingClientRect().y
-var ovniIndex = 0, expectedXAxis
+var ovniIndex = 0, expectedXAxis, speed = 150, enemyLaserSpeed = 15
 
 class EnemyLaser{
-    constructor(object){
+    constructor(object, enemyLaserSpeed){
         this.y = object.y
         this.x = object.x
+        this.speed = enemyLaserSpeed
         this.createEnemyLaser()
     }
 
@@ -40,6 +41,8 @@ class EnemyLaser{
             let starshipY = (Number(STARSHIP.style.top.replace(`px`, ``)) - (STARSHIP_HEIGHT/2))
             if(this.y >= starshipY){
                 BOARD_GAME.removeChild(this.laser)
+                newGame.lifes--
+                newGame.killStarship()
             }else{
                 this.down()
             }
@@ -56,14 +59,14 @@ class EnemyLaser{
                 this.y+=2
                 this.laser.style.top = this.y+`px`
                 this.downwards()
-            }, 15)
+            }, this.speed)
         }
     }
 }
 
 class Ovni{
-    constructor(){
-        this.speed = 150
+    constructor(speed){
+        this.speed = speed
         this.x = Math.floor(Math.random() * (window.innerWidth - OVNI_WIDTH))
         this.finalX = this.x + OVNI_WIDTH
         this.y = OVNI_HEIGHT
@@ -86,7 +89,8 @@ class Ovni{
     moveDownwards(){
         if(this.y >= window.innerHeight){
             if(this.alive === true){
-                console.log(`Floor reached`)
+                newGame.lifes--
+                newGame.killStarship()
                 BOARD_GAME.removeChild(this.ovni)
             }
         }else{
@@ -105,7 +109,7 @@ class Ovni{
         if(this.alive === true){
             let time = Math.ceil(Math.random() * 20)
             if(time === 20){
-                let enemyLaser = new EnemyLaser(this)
+                let enemyLaser = new EnemyLaser(this, enemyLaserSpeed)
             }
         }
     }
@@ -183,7 +187,7 @@ class Laser {
             }
         })
 
-        newGame.points+=2
+        newGame.points+=5
         newGame.displayPoints()
     }
 
@@ -226,7 +230,7 @@ function direction(){
 
 class Game{
     constructor(){
-        this.points = 90
+        this.points = 0
         this.level = 1
         this.lifes = 2
         this.stop = false
@@ -286,6 +290,29 @@ class Game{
         }
     }
 
+    nextLevel(){
+        NEXT_LEVEL.style.opacity = 1
+
+        ovnis.forEach(item => {
+            BOARD_GAME.removeChild(item.ovni)
+            item.alive = false
+        })
+
+        ovnis = []
+        setTimeout(() => {
+            this.stop = false
+            NEXT_LEVEL.style.opacity = 0
+
+            if(enemyLaserSpeed != 5){
+                enemyLaserSpeed -= 5
+            }
+
+            if(speed != 50){
+                speed -= 50
+            }
+        }, 2000)
+    }
+
     displayStatus(){
         GAME_STATUS.style.opacity = 1
         this.displayLifes()
@@ -299,7 +326,7 @@ class Game{
             let time = Math.ceil(Math.random() * 9)
             if(time % 3 === 0){
                 setTimeout(() => {
-                    let ovni = new Ovni()
+                    let ovni = new Ovni(speed)
                     this.createOvnis()
                 }, time * 1000)
             }else{
@@ -308,15 +335,22 @@ class Game{
         }
     }
 
-    nextLevel(){
-        NEXT_LEVEL.style.opacity = 1
-        ovnis.forEach(item => {
-            BOARD_GAME.removeChild(item.ovni)
-            item.alive = false
-        })
-        setTimeout(() => {
-            NEXT_LEVEL.style.opacity = 0
-        }, 5000)
+    killStarship(){
+        if(this.lifes === -1){
+            ovnis.forEach(item => {
+                BOARD_GAME.removeChild(item.ovni)
+                item.alive = false
+            })
+            ovnis = []
+            this.loser()
+        }else{
+            LIFES_CONTAINER.removeChild(LIFES_CONTAINER.childNodes[this.lifes])
+        }
+    }
+
+    loser(){
+        console.log(`You lose`)
+        this.stop = true
     }
 }
 
