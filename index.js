@@ -262,7 +262,7 @@ class Game{
         this.setStarship()
         this.controls()
         this.displayStatus()
-        // this.createOvnis()
+        this.createOvnis()
     }
 
     hideTitle(){
