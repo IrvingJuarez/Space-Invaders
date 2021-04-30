@@ -208,23 +208,31 @@ function isTap(){
     }
 }
 
+function left(){
+    if(Number(STARSHIP.style.left.replace(`px`, ``)) <= 0){
+        //Left
+    }else{
+        expectedXAxis = currentXAxis - 3
+        STARSHIP.style.left = expectedXAxis+`px`
+    }
+}
+
+function right(){
+    if(Number(STARSHIP.style.left.replace(`px`, ``)) >= borderRight){
+        //Right
+    }else{
+        expectedXAxis = currentXAxis + 3
+        STARSHIP.style.left = expectedXAxis+`px`
+    }
+}
+
 function direction(){
     let index = arrayTouch.length - 1
 
     if(arrayTouch[index] > arrayTouch[index - 1]){
-        if(Number(STARSHIP.style.left.replace(`px`, ``)) >= borderRight){
-            //Right
-        }else{
-            expectedXAxis = currentXAxis + 2
-            STARSHIP.style.left = expectedXAxis+`px`
-        }
+        right()
     }else{
-        if(Number(STARSHIP.style.left.replace(`px`, ``)) <= 0){
-            //Left
-        }else{
-            expectedXAxis = currentXAxis - 2
-            STARSHIP.style.left = expectedXAxis+`px`
-        }
+        left()
     }
     currentXAxis = expectedXAxis
 }
@@ -232,23 +240,26 @@ function direction(){
 function keyConstrols(evt){
     switch(evt.keyCode){
         case 39:
-            while(keyFlag){
-                console.log(`True`)
-                // expectedXAxis = currentXAxis + 2
-                // if(Number(STARSHIP.style.left.replace(`px`, ``)) >= borderRight){
-                //     Do nothing
-                // }else{
-                //     STARSHIP.style.left = expectedXAxis+`px`
-                // }
+            if(Number(STARSHIP.style.left.replace(`px`, ``)) >= borderRight){
+                //Right
+            }else{
+                expectedXAxis = currentXAxis + 10
+                STARSHIP.style.left = expectedXAxis+`px`
             }
         break;
         case 37:
-            console.log(`Left`)
+            if(Number(STARSHIP.style.left.replace(`px`, ``)) <= 0){
+                //Left
+            }else{
+                expectedXAxis = currentXAxis - 10
+                STARSHIP.style.left = expectedXAxis+`px`
+            }
         break;
         case 32:
-            console.log(`Spacebar`)
+            let laser = new Laser()
         break;
     }
+    currentXAxis = expectedXAxis
 }
 
 class Game{
@@ -286,6 +297,10 @@ class Game{
         BOARD_GAME.addEventListener("touchmove", evt => {
             arrayTouch.push(evt.changedTouches[0].screenX)
             direction()
+        })
+
+        document.addEventListener("keydown", evt => {
+            keyConstrols(evt)
         })
     }
 
@@ -360,7 +375,6 @@ class Game{
 
     killStarship(){
         if(this.lifes <= -1){
-            this.cleanScreen()
             this.loser()
         }else{
             LIFES_CONTAINER.removeChild(LIFES_CONTAINER.childNodes[this.lifes])
